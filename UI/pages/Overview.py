@@ -51,8 +51,9 @@ with right_col:
     ))
     fig.update_geos(
         scope="asia",
-        center=dict(lat=21.2, lon=80.5),
-        projection_scale=4.35,
+       
+        lataxis_range=[6.5, 37.5],   # Shows full India from Kanyakumari to Kashmir
+        lonaxis_range=[67.5, 98.0],  # Shows full width from Gujarat to Arunachal Pradesh
         showland=True, landcolor="#9EB8AB",
         showcountries=True, countrycolor="#E6EFEA", countrywidth=1.2,
         showocean=True, oceancolor="#D7E5DE",
@@ -60,7 +61,7 @@ with right_col:
     )
     fig.update_layout(
         margin=dict(l=0, r=0, t=0, b=0),
-        height=395,
+        height=430,
         showlegend=False,
         paper_bgcolor="#D7E5DE",
         dragmode=False
