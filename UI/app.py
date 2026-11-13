@@ -1,9 +1,8 @@
 import streamlit as st
 from utils.styles import load_css, get_logo_svg
-
 st.set_page_config(
     page_title="Waste Forecast - Login",
-    page_icon="W",
+    page_icon="assets/favicon.png",
     layout="wide",
     initial_sidebar_state="collapsed"
 )
@@ -50,7 +49,7 @@ with st.container(border=True):
     username = st.text_input("Username", placeholder="officer_name")
     password = st.text_input("Password", type="password", placeholder="Enter your password")
 
-    if st.button("Log in", type="primary", use_container_width=True):
+    if st.button("Log in", type="primary", width="stretch"):
         if username.strip() and password.strip():
             st.session_state.logged_in = True
             st.session_state.username = username.strip()
