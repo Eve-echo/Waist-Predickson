@@ -57,7 +57,7 @@ with col_chart:
             xaxis=dict(visible=False, range=[0, max(df["Forecast"]) * 1.18]),
             yaxis=dict(tickfont=dict(size=13.5, color="#16211D", family="Inter"))
         )
-        st.plotly_chart(fig, use_container_width=True, config={"displayModeBar": False, "staticPlot": True})
+        st.plotly_chart(fig, width="stretch", config={"displayModeBar": False, "staticPlot": True})
 
 with col_table:
     with st.container(border=True):

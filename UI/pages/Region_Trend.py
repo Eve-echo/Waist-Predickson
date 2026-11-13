@@ -63,7 +63,7 @@ with chart_col:
             xaxis=dict(tickmode="linear", dtick=1, showgrid=False, tickfont=dict(color="#2B3934", size=12)),
             yaxis=dict(range=[0, 52], dtick=10, gridcolor="#E5EFEA", tickfont=dict(color="#2B3934", size=11))
         )
-        st.plotly_chart(fig, use_container_width=True, config={"displayModeBar": False, "staticPlot": True})
+        st.plotly_chart(fig, width="stretch", config={"displayModeBar": False, "staticPlot": True})
 
 with kpi_col:
     st.markdown(f'<div class="kpi-card"><div class="kpi-header"><span>Latest actual (t/day):</span></div><div class="kpi-value">{region_data["actual"]}</div></div><div class="kpi-card"><div class="kpi-header"><span>Forecast next period:</span></div><div class="kpi-value">{region_data["next"]}</div></div><div class="kpi-card"><div class="kpi-header"><span>Backtest error (MAPE):</span></div><div class="kpi-value">{region_data["mape"]}</div></div>', unsafe_allow_html=True)

@@ -66,5 +66,5 @@ with right_col:
         paper_bgcolor="#D7E5DE",
         dragmode=False
     )
-    st.plotly_chart(fig, use_container_width=True, config={"displayModeBar": False, "staticPlot": True})
+    st.plotly_chart(fig, width="stretch", config={"displayModeBar": False, "staticPlot": True})
     st.markdown("<div style='font-size:0.8rem; color:#2B3934; margin-top:-6px; padding-left:6px;'>Map: top predicted region (orange), other key cities (green)</div>", unsafe_allow_html=True)

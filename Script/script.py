@@ -1,2 +1,2 @@
-import Pandas
+import pandas
 import sklearn
