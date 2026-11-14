@@ -1,7 +1,7 @@
 import streamlit as st
 
 from utils import data
-from utils.styles import load_css, page_header, render_navbar, require_login
+from utils.styles import load_css, render_navbar, require_login
 
 st.set_page_config(page_title="Waste Forecast - Profile", page_icon="assets/favicon.png", layout="wide", initial_sidebar_state="collapsed")
 load_css()
@@ -16,23 +16,35 @@ st.markdown('''
         padding: 0.55rem 1.4rem !important; font-weight: 600 !important;
     }
     .st-key-save_profile button:hover { background-color: #16422D !important; }
+    [data-testid="stHeaderActionElements"] { display: none !important; }
 </style>
 ''', unsafe_allow_html=True)
 
-page_header("Edit profile", "Change your username or password.")
+st.markdown(
+    "<div style='text-align:center; margin-bottom:20px;'>"
+    "<h1 style='margin-bottom:2px; font-size:2.2rem; font-weight:800; color:#16211D;'>Edit profile</h1>"
+    "<p style='color:#2B3934; font-size:1rem; margin:0;'>Change your username or password.</p></div>",
+    unsafe_allow_html=True,
+)
 
 username = st.session_state.username
-form_col, _ = st.columns([1, 1.6], gap="large")
+_, form_col, _ = st.columns([1, 1.2, 1], gap="large")
 
 with form_col:
+    # Shown on the run right after a successful save (the page reruns so the navbar picks up a new username).
+    if st.session_state.pop("profile_saved", False):
+        st.success("Your profile has been saved.", icon=":material/check_circle:")
+
     with st.container(border=True):
-        st.markdown(f"<div style='padding:4px 4px 0 4px; color:#5B6B64; font-size:0.85rem;'>Role: <b style='text-transform:capitalize; color:#16211D;'>{st.session_state.role}</b></div>", unsafe_allow_html=True)
-        with st.form("edit_profile", border=False):
-            new_username = st.text_input("Username", value=username)
-            new_password = st.text_input("New password", type="password", placeholder="Leave blank to keep your current password")
-            confirm = st.text_input("Confirm new password", type="password")
-            current = st.text_input("Current password", type="password", help="Required to save any change.")
-            submitted = st.form_submit_button("Save changes", key="save_profile")
+        st.markdown(f"<div style='text-align:center; padding:4px 4px 0 4px; color:#5B6B64; font-size:0.85rem;'>Role: <b style='text-transform:capitalize; color:#16211D;'>{st.session_state.role}</b></div>", unsafe_allow_html=True)
+        # The counter changes after a successful save, which gives the form fresh (empty) fields.
+        n = st.session_state.get("profile_form_n", 0)
+        with st.form(f"edit_profile_{n}", border=False):
+            new_username = st.text_input("Username", value=username, key=f"pf_user_{n}")
+            new_password = st.text_input("New password", type="password", placeholder="Leave blank to keep your current password", key=f"pf_new_{n}")
+            confirm = st.text_input("Confirm new password", type="password", key=f"pf_confirm_{n}")
+            current = st.text_input("Current password", type="password", help="Required to save any change.", key=f"pf_current_{n}")
+            submitted = st.form_submit_button("Save changes", key="save_profile", width="stretch")
 
     if submitted:
         new_username = new_username.strip()
@@ -41,7 +53,7 @@ with form_col:
         elif new_password != confirm:
             st.error("The new passwords do not match.")
         elif new_username == username and not new_password:
-            st.toast("No changes to save.")
+            st.info("There are no changes to save.")
         else:
             try:
                 user = data.update_profile(username, current, new_username, new_password or None)
@@ -49,5 +61,6 @@ with form_col:
                 st.error(str(err))
             else:
                 st.session_state.username = user["username"]
-                st.toast("Profile updated.")
+                st.session_state.profile_saved = True
+                st.session_state.profile_form_n = n + 1
                 st.rerun()

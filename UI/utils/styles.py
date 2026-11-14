@@ -27,7 +27,7 @@ def load_css():
         }
 
         div[data-testid="stHorizontalBlock"] .stButton > button {
-            border-radius: 999px;
+            border-radius: 4px;
             border: 1px solid #8AA699;
             background-color: transparent;
             color: #16211D;
@@ -119,7 +119,7 @@ def load_css():
 
         .st-key-nav_profile { display: flex; justify-content: flex-end; }
         .st-key-nav_profile button {
-            border-radius: 999px !important;
+            border-radius: 4px !important;
             border: 1px solid #8AA699 !important;
             background-color: transparent !important;
             padding: 0.3rem 0.45rem !important;
