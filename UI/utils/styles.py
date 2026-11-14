@@ -11,7 +11,7 @@ def load_css():
         }
 
         .stApp {
-            background-color: #E6EFEA;
+            background-color: #F8F9F7;
             color: #16211D;
             font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
         }
@@ -53,8 +53,8 @@ def load_css():
         [data-testid="stVerticalBlockBorderWrapper"] {
             background-color: #FFFFFF !important;
             border-radius: 16px !important;
-            border: none !important;
-            box-shadow: 0 4px 14px rgba(22, 33, 29, 0.05) !important;
+            border: 1px solid #E8ECE9 !important;
+            box-shadow: 0 4px 14px rgba(22, 33, 29, 0.06) !important;
             padding: 8px 10px !important;
         }
 
@@ -62,7 +62,8 @@ def load_css():
             background-color: #FFFFFF;
             border-radius: 16px;
             padding: 20px 24px;
-            box-shadow: 0 4px 14px rgba(22, 33, 29, 0.05);
+            border: 1px solid #E8ECE9;
+            box-shadow: 0 4px 14px rgba(22, 33, 29, 0.06);
             margin-bottom: 16px;
         }
         .kpi-header {
@@ -117,19 +118,48 @@ def load_css():
             box-shadow: 0 4px 12px rgba(22, 33, 29, 0.04);
         }
 
+        /* ---- Single joined navigation bar ---- */
+        .st-key-nav_bar {
+            background-color: #1E563B;
+            border-radius: 4px;
+            overflow: hidden;
+        }
+        .st-key-nav_bar div[data-testid="stHorizontalBlock"] { gap: 0 !important; }
+        .st-key-nav_bar div[data-testid="stColumn"] { padding: 0 !important; min-width: 0; }
+        .st-key-nav_bar div[data-testid="stColumn"] + div[data-testid="stColumn"] { border-left: 1px solid rgba(255, 255, 255, 0.45); }
+        .st-key-nav_bar [class*="st-key-nav_"], .st-key-nav_bar [data-testid="stButton"] { width: 100% !important; }
+        .st-key-nav_bar .stButton > button {
+            width: 100% !important;
+            justify-content: center;
+            border: none !important;
+            border-radius: 0 !important;
+            background-color: transparent !important;
+            color: #FFFFFF !important;
+            font-weight: 500 !important;
+            padding: 0.7rem 0.5rem !important;
+            min-height: 2.9rem;
+        }
+        .st-key-nav_bar .stButton > button:hover { background-color: #2B6B4A !important; }
+        .st-key-nav_bar .stButton > button[kind="primary"] { background-color: #0F3A24 !important; font-weight: 600 !important; }
+
+        .st-key-nav_logo [data-testid="stMarkdownContainer"] { margin-bottom: 0 !important; }
+
+        /* ---- Profile icon: plain icon, no square, no dropdown arrow ---- */
         .st-key-nav_profile { display: flex; justify-content: flex-end; }
         .st-key-nav_profile button {
-            border-radius: 4px !important;
-            border: 1px solid #8AA699 !important;
+            border: none !important;
+            border-radius: 50% !important;
             background-color: transparent !important;
-            padding: 0.3rem 0.45rem !important;
+            box-shadow: none !important;
+            padding: 0.25rem !important;
             min-height: 0 !important;
             color: #1E563B !important;
         }
-        .st-key-nav_profile button:hover { background-color: #C7DBD1 !important; border-color: #1E563B !important; }
-        .st-key-nav_profile button svg { width: 1.7rem; height: 1.7rem; }
-        .st-key-nav_profile button [data-testid="stIconMaterial"] { font-size: 1.7rem !important; }
+        .st-key-nav_profile button:hover { background-color: #E9EFEB !important; }
+        .st-key-nav_profile button svg { width: 2rem; height: 2rem; }
+        .st-key-nav_profile button [data-testid="stIconMaterial"] { font-size: 2rem !important; }
         .st-key-nav_profile button p { display: none; }
+        .st-key-nav_profile [data-testid="stPopoverButton"] > div > div[aria-hidden="true"] { display: none !important; }
 
         div[data-baseweb="select"] > div {
             background-color: #FFFFFF !important;
@@ -144,26 +174,26 @@ def get_logo_svg(size=36):
 
 def render_navbar(active_page: str):
     st.markdown("<div style='height: 14px;'></div>", unsafe_allow_html=True)
-    col_logo, col_nav1, col_nav2, col_nav3, col_nav4, col_user = st.columns([2.2, 1.05, 1.05, 1.25, 1.25, 2.3])
+    col_logo, col_nav, col_user = st.columns([2.4, 4.6, 3.0], vertical_alignment="center")
 
-    with col_logo:
-        st.markdown(f'<div style="display:flex; align-items:center; gap:10px; padding-top:2px;">{get_logo_svg(34)}<span style="font-size:1.25rem; font-weight:800; color:#16211D; letter-spacing:-0.02em;">Waste Forecast</span></div>', unsafe_allow_html=True)
+    with col_logo, st.container(key="nav_logo"):
+        st.markdown(f'<div style="display:flex; align-items:center; gap:10px; height:2.9rem;">{get_logo_svg(34)}<span style="font-size:1.25rem; font-weight:800; color:#16211D; letter-spacing:-0.02em;">Waste Forecast</span></div>', unsafe_allow_html=True)
 
-    with col_nav1:
-        if st.button("Home", key="nav_Home", type="primary" if active_page == "Home" else "secondary"):
-            st.switch_page("pages/Home.py")
-
-    with col_nav2:
-        if st.button("Forecast", key="nav_Forecast", type="primary" if active_page == "Forecast" else "secondary"):
-            st.switch_page("pages/Forecast.py")
-
-    with col_nav3:
-        if st.button("Region trend", key="nav_Region_trend", type="primary" if active_page == "Region trend" else "secondary"):
-            st.switch_page("pages/Region_Trend.py")
-
-    with col_nav4:
-        if st.button("Bin capacity", key="nav_Bin_capacity", type="primary" if active_page == "Bin capacity" else "secondary"):
-            st.switch_page("pages/Bin_Capacity.py")
+    with col_nav:
+        with st.container(key="nav_bar"):
+            n1, n2, n3, n4 = st.columns([1, 1.05, 1.25, 1.3], gap="small")
+            with n1:
+                if st.button("Home", key="nav_Home", type="primary" if active_page == "Home" else "secondary"):
+                    st.switch_page("pages/Home.py")
+            with n2:
+                if st.button("Forecast", key="nav_Forecast", type="primary" if active_page == "Forecast" else "secondary"):
+                    st.switch_page("pages/Forecast.py")
+            with n3:
+                if st.button("Region trend", key="nav_Region_trend", type="primary" if active_page == "Region trend" else "secondary"):
+                    st.switch_page("pages/Region_Trend.py")
+            with n4:
+                if st.button("Bin capacity", key="nav_Bin_capacity", type="primary" if active_page == "Bin capacity" else "secondary"):
+                    st.switch_page("pages/Bin_Capacity.py")
 
     with col_user:
         _, col_profile = st.columns([4, 1])

@@ -101,7 +101,7 @@ with right_col:
     )
     st.markdown("<div style='font-size:0.8rem; color:#2B3934; margin-top:-6px; padding-left:6px;'>Drag to pan, scroll to zoom, double-click to reset. Marker size shows predicted waste: top region in orange, the rest in green.</div>", unsafe_allow_html=True)
 
-# ---- Region table (moved here from the Bin capacity page) ----
+#  Region table (moved here from the Bin capacity page) 
 st.markdown("<div style='height:22px;'></div>", unsafe_allow_html=True)
 st.markdown("<h3 style='margin-bottom:2px; font-weight:800; color:#16211D;'>Bins by region</h3>", unsafe_allow_html=True)
 st.caption(
