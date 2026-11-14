@@ -117,6 +117,20 @@ def load_css():
             box-shadow: 0 4px 12px rgba(22, 33, 29, 0.04);
         }
 
+        .st-key-nav_profile { display: flex; justify-content: flex-end; }
+        .st-key-nav_profile button {
+            border-radius: 999px !important;
+            border: 1px solid #8AA699 !important;
+            background-color: transparent !important;
+            padding: 0.3rem 0.45rem !important;
+            min-height: 0 !important;
+            color: #1E563B !important;
+        }
+        .st-key-nav_profile button:hover { background-color: #C7DBD1 !important; border-color: #1E563B !important; }
+        .st-key-nav_profile button svg { width: 1.7rem; height: 1.7rem; }
+        .st-key-nav_profile button [data-testid="stIconMaterial"] { font-size: 1.7rem !important; }
+        .st-key-nav_profile button p { display: none; }
+
         div[data-baseweb="select"] > div {
             background-color: #FFFFFF !important;
             border-radius: 10px !important;
@@ -136,8 +150,8 @@ def render_navbar(active_page: str):
         st.markdown(f'<div style="display:flex; align-items:center; gap:10px; padding-top:2px;">{get_logo_svg(34)}<span style="font-size:1.25rem; font-weight:800; color:#16211D; letter-spacing:-0.02em;">Waste Forecast</span></div>', unsafe_allow_html=True)
 
     with col_nav1:
-        if st.button("Overview", key="nav_Overview", type="primary" if active_page == "Overview" else "secondary"):
-            st.switch_page("pages/Overview.py")
+        if st.button("Home", key="nav_Home", type="primary" if active_page == "Home" else "secondary"):
+            st.switch_page("pages/Home.py")
 
     with col_nav2:
         if st.button("Forecast", key="nav_Forecast", type="primary" if active_page == "Forecast" else "secondary"):
@@ -152,17 +166,26 @@ def render_navbar(active_page: str):
             st.switch_page("pages/Bin_Capacity.py")
 
     with col_user:
-        u1, u2 = st.columns([1.45, 1])
+        _, col_profile = st.columns([4, 1])
         user = st.session_state.get("username", "")
-        with u1:
-            st.markdown(f"<div style='text-align:right; padding-top:8px; font-size:0.9rem; color:#2B3934;'>Signed in as <b>{user}</b></div>", unsafe_allow_html=True)
-        with u2:
-            if st.button("Log out", key="nav_logout"):
-                st.session_state.logged_in = False
-                st.session_state.username = ""
-                st.switch_page("app.py")
+        role = st.session_state.get("role", "")
+        with col_profile:
+            with st.popover("", icon=":material/account_circle:", key="nav_profile", help="Profile"):
+                st.markdown(
+                    f"<div style='padding:2px 4px 8px 4px; min-width:150px;'>"
+                    f"<div style='font-weight:700; color:#16211D;'>{user}</div>"
+                    f"<div style='font-size:0.8rem; color:#5B6B64; text-transform:capitalize;'>{role}</div></div>",
+                    unsafe_allow_html=True,
+                )
+                if st.button("Edit profile", key="nav_edit_profile", icon=":material/edit:", width="stretch"):
+                    st.switch_page("pages/Profile.py")
+                if st.button("Log out", key="nav_logout", icon=":material/logout:", width="stretch"):
+                    st.session_state.logged_in = False
+                    st.session_state.username = ""
+                    st.session_state.role = ""
+                    st.switch_page("app.py")
 
-    st.markdown("<hr style='margin: 12px 0 24px 0; border: none; border-top: 1px solid #C6D6CE;'>", unsafe_allow_html=True)
+    st.markdown("<hr style='margin: 12px 0 24px 0; border: none; border-top: 4px solid #9DB8AB; border-radius: 4px;'>", unsafe_allow_html=True)
 
 
 def require_login():

@@ -16,7 +16,7 @@ st.session_state.setdefault("username", "")
 st.session_state.setdefault("role", "")
 
 if st.session_state.logged_in:
-    st.switch_page("pages/Overview.py")
+    st.switch_page("pages/Home.py")
 
 st.markdown('''
 <style>
@@ -61,7 +61,7 @@ with st.container(border=True):
             st.session_state.logged_in = True
             st.session_state.username = user["username"]
             st.session_state.role = user["role"]
-            st.switch_page("pages/Overview.py")
+            st.switch_page("pages/Home.py")
         else:
             st.markdown('<div class="login-error">Invalid username or password.</div>', unsafe_allow_html=True)
 
