@@ -89,6 +89,11 @@ def authenticate(username: str, password: str) -> dict | None:
     return _query(db.verify_user, username, password)
 
 
+def update_profile(username: str, current_password: str, new_username: str | None = None,
+                   new_password: str | None = None) -> dict:
+    return _query(db.update_profile, username, current_password, new_username, new_password)
+
+
 def ensure_ready() -> dict:
     """Stop the page with setup instructions if the database has no model results yet."""
     run = run_info() if db.DB_PATH.exists() else None

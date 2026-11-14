@@ -156,6 +156,30 @@ def verify_user(conn, username: str, password: str):
     digest = hashlib.pbkdf2_hmac("sha256", password.encode(), bytes.fromhex(salt_hex), 200_000).hex()
     return {"username": row["username"], "role": row["role"]} if hmac.compare_digest(digest, digest_hex) else None
 
+def update_profile(conn, username: str, current_password: str,
+                   new_username: str | None = None, new_password: str | None = None) -> dict:
+    """Change a user's username and/or password. The current password must be correct.
+    Returns the updated {'username','role'}; raises ValueError with a message for the UI."""
+    user = verify_user(conn, username, current_password)
+    if user is None:
+        raise ValueError("Current password is incorrect.")
+    new_username = (new_username or username).strip()
+    if not new_username:
+        raise ValueError("Username cannot be empty.")
+    if new_username != username and conn.execute(
+            "SELECT 1 FROM users WHERE username = ?", (new_username,)).fetchone():
+        raise ValueError("That username is already taken.")
+    if new_password is not None and len(new_password) < 6:
+        raise ValueError("New password must be at least 6 characters.")
+    with conn:
+        if new_password:
+            conn.execute("UPDATE users SET username = ?, password_hash = ? WHERE username = ?",
+                         (new_username, hash_password(new_password), username))
+        else:
+            conn.execute("UPDATE users SET username = ? WHERE username = ?", (new_username, username))
+    return {"username": new_username, "role": user["role"]}
+
+
 
 
 def latest_run(conn):
@@ -223,7 +247,7 @@ def get_model_metrics(conn) -> pd.DataFrame:
 def get_capacity_summary(conn, period_start: str | None = None, model_name: str | None = None,
                          kind: str | None = None) -> pd.DataFrame:
     """One row per city for one month: predicted waste, bins needed (ML proxy), bins deployed,
-    bins to add, priority. Powers the Overview, Forecast and Bin capacity pages."""
+    bins to add, priority. Powers the Home, Forecast and Bin capacity pages."""
     run = latest_run(conn)
     if run is None:
         return pd.DataFrame()
