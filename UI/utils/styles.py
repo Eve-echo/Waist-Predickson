@@ -27,7 +27,7 @@ def load_css():
         }
 
         div[data-testid="stHorizontalBlock"] .stButton > button {
-            border-radius: 4px;
+            border-radius: 999px;
             border: 1px solid #8AA699;
             background-color: transparent;
             color: #16211D;
@@ -53,8 +53,8 @@ def load_css():
         [data-testid="stVerticalBlockBorderWrapper"] {
             background-color: #FFFFFF !important;
             border-radius: 16px !important;
-            border: 1px solid #E8ECE9 !important;
-            box-shadow: 0 4px 14px rgba(22, 33, 29, 0.06) !important;
+            border: none !important;
+            box-shadow: 0 4px 14px rgba(22, 33, 29, 0.05) !important;
             padding: 8px 10px !important;
         }
 
@@ -62,8 +62,7 @@ def load_css():
             background-color: #FFFFFF;
             border-radius: 16px;
             padding: 20px 24px;
-            border: 1px solid #E8ECE9;
-            box-shadow: 0 4px 14px rgba(22, 33, 29, 0.06);
+            box-shadow: 0 4px 14px rgba(22, 33, 29, 0.05);
             margin-bottom: 16px;
         }
         .kpi-header {
