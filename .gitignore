@@ -20,5 +20,15 @@ __pycache__/
 .DS_Store
 Thumbs.db
 
+# database
+*.db
+*.sqlite
+*.sqlite3
+
+# csv file
+data/*.csv
+data/*.db
+RESULT_4/
+
 # Generated files
 *.log
