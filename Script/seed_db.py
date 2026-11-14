@@ -21,7 +21,7 @@ GROUP = ["City", "State", "Region", "Year", "Month"]
 BIN_KG = 100.0  
 
 p = argparse.ArgumentParser()
-p.add_argument("--data", default=str(ROOT / "data" / "Waste_Management_India_20K.csv"))
+p.add_argument("--data", default=str(ROOT / "Waste_Management_India_20K.csv"))
 p.add_argument("--reset", action="store_true", help="drop and re-create all tables first")
 a = p.parse_args()
 
