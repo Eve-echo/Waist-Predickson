@@ -1,3 +1,4 @@
+import pandas as pd
 import streamlit as st
 
 def load_css():
@@ -127,9 +128,6 @@ def load_css():
 def get_logo_svg(size=36):
     return f'<svg width="{size}" height="{size}" viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg"><circle cx="20" cy="20" r="20" fill="#1E563B"/><text x="16" y="26" fill="white" font-family="Inter, sans-serif" font-weight="800" font-size="18" text-anchor="middle">W</text><path d="M27 13C24 13 22 15.5 22 18.5C25 18.5 27.5 16.5 27 13Z" fill="#7AC79E"/></svg>'
 
-def get_bin_svg(color="#1E563B"):
-    return f'<svg width="18" height="18" viewBox="0 0 24 24" fill="{color}" style="vertical-align: middle; margin-left: 8px; flex-shrink: 0;"><path d="M9 3V4H4V6H5V19C5 20.1 5.9 21 7 21H17C18.1 21 19 20.1 19 19V6H20V4H15V3H9ZM7 6H17V19H7V6ZM9 8V17H11V8H9ZM13 8V17H15V8H13Z"/></svg>'
-
 def render_navbar(active_page: str):
     st.markdown("<div style='height: 14px;'></div>", unsafe_allow_html=True)
     col_logo, col_nav1, col_nav2, col_nav3, col_nav4, col_user = st.columns([2.2, 1.05, 1.05, 1.25, 1.25, 2.3])
@@ -155,12 +153,41 @@ def render_navbar(active_page: str):
 
     with col_user:
         u1, u2 = st.columns([1.45, 1])
-        user = st.session_state.get("username", "officer")
+        user = st.session_state.get("username", "")
         with u1:
             st.markdown(f"<div style='text-align:right; padding-top:8px; font-size:0.9rem; color:#2B3934;'>Signed in as <b>{user}</b></div>", unsafe_allow_html=True)
         with u2:
             if st.button("Log out", key="nav_logout"):
                 st.session_state.logged_in = False
+                st.session_state.username = ""
                 st.switch_page("app.py")
 
     st.markdown("<hr style='margin: 12px 0 24px 0; border: none; border-top: 1px solid #C6D6CE;'>", unsafe_allow_html=True)
+
+
+def require_login():
+    """Send visitors who are not signed in back to the login page."""
+    if not st.session_state.get("logged_in"):
+        st.switch_page("app.py")
+
+
+def kpi_card(label: str, value: str, badge: str | None = None, accent: bool = False) -> str:
+    """HTML for one KPI tile; accent=True renders the orange call-to-action variant."""
+    cls = "kpi-card-orange" if accent else "kpi-card"
+    badge_cls = "badge-peach" if accent else "badge-green"
+    badge_html = f'<span class="{badge_cls}">{badge}</span>' if badge else ""
+    value_style = ' style="color:#6E2E04;"' if accent else ""
+    return (f'<div class="{cls}"><div class="kpi-header"><span>{label}</span>{badge_html}</div>'
+            f'<div class="kpi-value"{value_style}>{value}</div></div>')
+
+
+def page_header(title: str, subtitle: str):
+    st.markdown(f"<h1 style='margin-bottom:2px; font-size:2.2rem; font-weight:800; color:#16211D;'>{title}</h1>", unsafe_allow_html=True)
+    st.markdown(f"<p style='color:#2B3934; font-size:1rem; margin-bottom:20px;'>{subtitle}</p>", unsafe_allow_html=True)
+
+
+def fmt_change(new: float, old: float) -> str | None:
+    """Signed percentage change, or None when it cannot be computed."""
+    if old is None or not old or pd.isna(old) or pd.isna(new):
+        return None
+    return f"{(new - old) / old * 100:+.1f}%"

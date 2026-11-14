@@ -1,69 +1,73 @@
-import streamlit as st
+import pandas as pd
 import plotly.graph_objects as go
-from utils.styles import load_css, render_navbar
+import streamlit as st
+
+from utils import data
+from utils.styles import kpi_card, load_css, page_header, render_navbar, require_login
 
 st.set_page_config(page_title="Waste Forecast - Region trend", page_icon="assets/favicon.png", layout="wide", initial_sidebar_state="collapsed")
 load_css()
+require_login()
 render_navbar("Region trend")
+
+run = data.ensure_ready()
+ranked = data.capacity(data.periods()[0])
+cities = sorted(ranked["city"])
 
 h_col, f1_col, f2_col = st.columns([2.2, 1, 1], gap="medium")
 with h_col:
-    st.markdown("<h1 style='margin-bottom:2px; font-size:2.2rem; font-weight:800; color:#16211D;'>Region trend</h1>", unsafe_allow_html=True)
-    st.markdown("<p style='color:#2B3934; font-size:1rem;'>History and forecast for one region.</p>", unsafe_allow_html=True)
+    page_header("Region trend", "Actual waste history with the model's predictions for one region.")
 with f1_col:
-    region = st.selectbox("Region", ["Mumbai", "Delhi", "Bangalore", "Chennai", "Kolkata"])
+    region = st.selectbox("Region", cities, index=cities.index(ranked.iloc[0]["city"]))
 with f2_col:
-    horizon = st.selectbox("Forecast horizon", ["3 years", "5 years"])
+    window = st.selectbox("History window", ["2 years", "5 years", "All"])
 
-st.markdown("<div style='height: 10px;'></div>", unsafe_allow_html=True)
+hist = data.history(region)
+pred = data.predictions(region)
+if pred.empty:
+    st.info(f"No model predictions are stored for {region}.")
+    st.stop()
+hist["date"] = pd.to_datetime(hist["period_start"])
+pred["date"] = pd.to_datetime(pred["period_start"])
 
-region_data = {
-    "Mumbai":    {"hist": [8, 6, 14, 17.5, 22.5, 26], "actual": 341, "next": 350, "mape": "3.5%"},
-    "Delhi":     {"hist": [7, 6.5, 12, 15.5, 20.0, 24], "actual": 318, "next": 330, "mape": "3.8%"},
-    "Bangalore": {"hist": [6, 5.5, 11, 14.0, 18.5, 22], "actual": 302, "next": 316, "mape": "3.2%"},
-    "Chennai":   {"hist": [5, 4.8, 9.5, 12.5, 16.0, 19], "actual": 261, "next": 273, "mape": "4.1%"},
-    "Kolkata":   {"hist": [5.5, 5.0, 9.0, 11.5, 14.5, 17], "actual": 232, "next": 243, "mape": "3.9%"},
-}[region]
+if window != "All":
+    hist = hist[hist["date"] >= hist["date"].max() - pd.DateOffset(years=int(window[0]))]
+shown_pred = pred[pred["date"] >= hist["date"].min()]
 
-hist_years = [2019, 2020, 2021, 2022, 2023, 2024]
-hist_vals = region_data["hist"]
-
-fore_years = [2024, 2025, 2026, 2027] if horizon == "3 years" else [2024, 2025, 2026, 2027, 2028, 2029]
-fore_vals = [hist_vals[-1] + (i * 2.2) for i in range(len(fore_years))]
-upper = [v + (i * 4.8) for i, v in enumerate(fore_vals)]
-lower = [max(0, v - (i * 4.8)) for i, v in enumerate(fore_vals)]
+# Error over every held-out month for this region, not just the visible window.
+wape = (pred["predicted_tons_per_day"] - pred["actual_tons_per_day"]).abs().sum() / pred["actual_tons_per_day"].sum() * 100
+latest = pred.iloc[-1]
 
 chart_col, kpi_col = st.columns([2.35, 1], gap="large")
 
 with chart_col:
     with st.container(border=True):
         fig = go.Figure()
-        fig.add_trace(go.Scatter(
-            x=fore_years + fore_years[::-1],
-            y=upper + lower[::-1],
-            fill="toself",
-            fillcolor="rgba(30, 86, 59, 0.22)",
-            line=dict(color="rgba(255,255,255,0)"),
-            hoverinfo="skip"
-        ))
-        fig.add_trace(go.Scatter(
-            x=hist_years, y=hist_vals, mode="lines",
-            line=dict(color="#1E563B", width=3, shape="spline")
-        ))
-        fig.add_trace(go.Scatter(
-            x=fore_years, y=fore_vals, mode="lines",
-            line=dict(color="#1E563B", width=2.5, dash="dash")
-        ))
+        fig.add_trace(go.Scatter(x=hist["date"], y=hist["waste_tons_per_day"], name="Actual", mode="lines",
+                                 line=dict(color="#1E563B", width=3)))
+        fig.add_trace(go.Scatter(x=shown_pred["date"], y=shown_pred["predicted_tons_per_day"], name="Model prediction", mode="lines",
+                                 line=dict(color="#E37829", width=2.5, dash="dash")))
         fig.update_layout(
-            margin=dict(l=16, r=20, t=16, b=16),
-            height=365,
-            paper_bgcolor="rgba(0,0,0,0)",
-            plot_bgcolor="rgba(0,0,0,0)",
-            showlegend=False,
-            xaxis=dict(tickmode="linear", dtick=1, showgrid=False, tickfont=dict(color="#2B3934", size=12)),
-            yaxis=dict(range=[0, 52], dtick=10, gridcolor="#E5EFEA", tickfont=dict(color="#2B3934", size=11))
+            margin=dict(l=16, r=20, t=16, b=16), height=365,
+            paper_bgcolor="rgba(0,0,0,0)", plot_bgcolor="rgba(0,0,0,0)",
+            legend=dict(orientation="h", y=1.08, x=0),
+            xaxis=dict(showgrid=False, tickfont=dict(color="#2B3934", size=12)),
+            yaxis=dict(title="tons / day", rangemode="tozero", gridcolor="#E5EFEA", tickfont=dict(color="#2B3934", size=11)),
         )
         st.plotly_chart(fig, width="stretch", config={"displayModeBar": False, "staticPlot": True})
 
 with kpi_col:
-    st.markdown(f'<div class="kpi-card"><div class="kpi-header"><span>Latest actual (t/day):</span></div><div class="kpi-value">{region_data["actual"]}</div></div><div class="kpi-card"><div class="kpi-header"><span>Forecast next period:</span></div><div class="kpi-value">{region_data["next"]}</div></div><div class="kpi-card"><div class="kpi-header"><span>Backtest error (MAPE):</span></div><div class="kpi-value">{region_data["mape"]}</div></div>', unsafe_allow_html=True)
+    bins_range = f"{latest['q10_bins']:,.0f} - {latest['q90_bins']:,.0f}" if pd.notna(latest["q10_bins"]) else "n/a"
+    st.markdown(
+        kpi_card("Latest actual (t/day):", f"{latest['actual_tons_per_day']:,.1f}")
+        + kpi_card(f"Model estimate, {data.month_label(latest['period_start'])}:", f"{latest['predicted_tons_per_day']:,.1f}")
+        + kpi_card("Backtest error (WAPE):", f"{wape:.1f}%")
+        + kpi_card("Bins needed, likely range:", bins_range),
+        unsafe_allow_html=True,
+    )
+
+st.caption(
+    f"Predictions are the {run['selected_model']} model's output for held-out months "
+    f"({data.month_label(run['test_from'])} to {data.month_label(run['test_through'])}); they are not a future forecast. "
+    "Region totals sum only the waste types reported that month, so they can undercount."
+)

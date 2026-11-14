@@ -1,107 +1,75 @@
-import streamlit as st
 import pandas as pd
-from utils.styles import load_css, render_navbar, get_bin_svg
+import streamlit as st
+
+from utils import data
+from utils.styles import kpi_card, load_css, page_header, render_navbar, require_login
 
 st.set_page_config(page_title="Waste Forecast - Bin capacity", page_icon="assets/favicon.png", layout="wide", initial_sidebar_state="collapsed")
 load_css()
+require_login()
 render_navbar("Bin capacity")
-
-if "bin_data" not in st.session_state:
-    st.session_state.bin_data = pd.DataFrame({
-        "Region": ["Mumbai", "Delhi", "Bangalore", "Chennai", "Kolkata"],
-        "Deployed": [2973, 2612, 2579, 2331, 1982],
-        "Trend": ["+0.5%", "+1.2%", "+1.2%", "+0.5%", "+0.0%"],
-        "Needed": [2923, 2750, 2632, 2274, 2022]
-    })
 
 st.markdown('''
 <style>
-    div[data-testid="stNumberInput"] input {
-        background-color: #FFFFFF !important;
-        border: 1px solid #C6D6CE !important;
-        border-radius: 8px !important;
-        padding: 4px 10px !important;
-        font-weight: 500 !important;
-        color: #16211D !important;
-    }
-    div[data-testid="stNumberInput"] button {
-        display: none !important;
-    }
-    .save-btn-wrap .stButton > button {
-        background-color: #1E563B !important;
-        color: #FFFFFF !important;
-        border-radius: 10px !important;
-        border: none !important;
-        padding: 0.55rem 1.4rem !important;
-        font-weight: 600 !important;
-        width: auto !important;
+    div.stButton > button[kind="primary"] {
+        background-color: #1E563B !important; color: #FFFFFF !important;
+        border-radius: 10px !important; border: none !important;
+        padding: 0.55rem 1.4rem !important; font-weight: 600 !important; width: auto !important;
     }
 </style>
 ''', unsafe_allow_html=True)
 
-st.markdown("<h1 style='margin-bottom:2px; font-size:2.2rem; font-weight:800; color:#16211D;'>Bin capacity</h1>", unsafe_allow_html=True)
-st.markdown("<p style='color:#2B3934; font-size:1rem; margin-bottom:20px;'>Bins deployed now versus bins needed.</p>", unsafe_allow_html=True)
+data.ensure_ready()
+period = data.periods()[0]
+summary = data.capacity(period)
 
-df = st.session_state.bin_data
-total_deployed = int(df["Deployed"].sum())
-total_needed = int(df["Needed"].sum())
-total_to_add = max(0, int((df["Needed"] - df["Deployed"]).clip(lower=0).sum()))
+page_header("Bin capacity", "Bins deployed now versus bins needed.")
+st.caption(
+    f"{data.month_label(period)} · bins needed is the ML script's weekly proxy, "
+    "ceil(daily tons × 1000 × 7 / (bin kg × collections per week)). "
+    "Deployed counts start as assumptions until edited here."
+)
 
 k1, k2, k3 = st.columns(3, gap="medium")
-with k1:
-    st.markdown(f'<div class="kpi-card"><div class="kpi-header"><span>Total deployed</span><span class="badge-green">+0.5%</span></div><div class="kpi-value">{total_deployed:,}</div></div>', unsafe_allow_html=True)
-with k2:
-    st.markdown(f'<div class="kpi-card"><div class="kpi-header"><span>Total needed</span><span class="badge-green">+1.2%</span></div><div class="kpi-value">{total_needed:,}</div></div>', unsafe_allow_html=True)
-with k3:
-    st.markdown(f'<div class="kpi-card-orange"><div class="kpi-header"><span>Bins to add</span><span class="badge-peach">+5%</span></div><div class="kpi-value" style="color:#6E2E04;">{total_to_add:,}</div></div>', unsafe_allow_html=True)
+k1.markdown(kpi_card("Total deployed", f"{int(summary['bins_deployed'].sum()):,}"), unsafe_allow_html=True)
+k2.markdown(kpi_card("Total needed", f"{int(summary['predicted_bins'].sum()):,}"), unsafe_allow_html=True)
+k3.markdown(kpi_card("Bins to add", f"{int(summary['bins_to_add'].sum()):,}", f"{int((summary['bins_to_add'] > 0).sum())} regions", accent=True), unsafe_allow_html=True)
+
+f1, f2, _ = st.columns([1, 1.4, 2.6], gap="medium")
+zone = f1.selectbox("Zone", ["All zones"] + sorted(summary["zone"].dropna().unique()))
+only_short = f2.toggle("Only regions that need bins", value=False)
+
+view = summary if zone == "All zones" else summary[summary["zone"] == zone]
+if only_short:
+    view = view[view["bins_to_add"] > 0]
+
+table = pd.DataFrame({
+    "Region": view["city"],
+    "Zone": view["zone"],
+    "Bins needed": view["predicted_bins"].fillna(0).round().astype(int),
+    "Likely range": [f"{lo:,.0f} - {hi:,.0f}" if pd.notna(lo) else "-" for lo, hi in zip(view["q10_bins"], view["q90_bins"])],
+    "Bins deployed": view["bins_deployed"].fillna(0).astype(int),
+    "Status": ["Enough" if add <= 0 else f"Add {int(add):,}" for add in view["bins_to_add"]],
+    "Source": view["bins_source"],
+}).reset_index(drop=True)
 
 with st.container(border=True):
-    hdr = st.columns([1.4, 2.2, 1.3, 1.6])
-    hdr[0].markdown("<div style='font-weight:600; color:#16211D; padding:6px 8px;'>Region</div>", unsafe_allow_html=True)
-    hdr[1].markdown("<div style='font-weight:600; color:#16211D; padding:6px 8px;'>Bins deployed (editable)</div>", unsafe_allow_html=True)
-    hdr[2].markdown("<div style='font-weight:600; color:#16211D; padding:6px 8px;'>Bins needed</div>", unsafe_allow_html=True)
-    hdr[3].markdown("<div style='font-weight:600; color:#16211D; padding:6px 8px;'>Status</div>", unsafe_allow_html=True)
-    st.markdown("<hr style='margin:4px 0 10px 0; border:none; border-top:1px solid #E5EFEA;'>", unsafe_allow_html=True)
-
-    updated_deployed = []
-    for idx, row in df.iterrows():
-        c1, c2, c3, c4 = st.columns([1.4, 2.2, 1.3, 1.6])
-        c1.markdown(f"<div style='padding:8px; font-weight:500; color:#16211D;'>{row['Region']}</div>", unsafe_allow_html=True)
-
-        with c2:
-            in_col, badge_col = st.columns([1, 1.2])
-            val = in_col.number_input(
-                label=f"dep_{row['Region']}",
-                value=int(row["Deployed"]),
-                step=10,
-                label_visibility="collapsed",
-                key=f"input_{row['Region']}"
-            )
-            updated_deployed.append(val)
-
-            is_enough = val >= row["Needed"]
-            icon_color = "#1E563B" if is_enough else "#A32015"
-            pill_bg = "#D2E3DB" if is_enough else "#F4C7C3"
-            pill_fg = "#1E563B" if is_enough else "#7A1810"
-            badge_col.markdown(
-                f"<div style='padding-top:6px; display:flex; align-items:center;'><span style='background:{pill_bg}; color:{pill_fg}; padding:3px 10px; border-radius:999px; font-size:0.78rem; font-weight:600;'>{row['Trend']}</span>{get_bin_svg(icon_color)}</div>",
-                unsafe_allow_html=True
-            )
-
-        c3.markdown(f"<div style='padding:8px; color:#16211D;'>{row['Needed']:,}</div>", unsafe_allow_html=True)
-
-        diff = row["Needed"] - val
-        if diff <= 0:
-            status_html = f"<span style='background:#D2E3DB; color:#1E563B; padding:4px 12px; border-radius:999px; font-size:0.8rem; font-weight:600;'>Enough</span>{get_bin_svg('#1E563B')}"
-        else:
-            status_html = f"<span style='background:#F4C7C3; color:#7A1810; padding:4px 12px; border-radius:999px; font-size:0.8rem; font-weight:600;'>Add {diff}</span>{get_bin_svg('#A32015')}"
-
-        c4.markdown(f"<div style='padding:6px 8px; display:flex; justify-content:space-between; align-items:center;'>{status_html}</div>", unsafe_allow_html=True)
+    edited = st.data_editor(
+        table,
+        hide_index=True,
+        width="stretch",
+        height=460,
+        disabled=[c for c in table.columns if c != "Bins deployed"],
+        column_config={"Bins deployed": st.column_config.NumberColumn("Bins deployed (editable)", min_value=0, step=10, format="%d")},
+        key=f"bins_{zone}_{only_short}",
+    )
 
 st.markdown("<div style='height:14px;'></div>", unsafe_allow_html=True)
-st.markdown("<div class='save-btn-wrap'>", unsafe_allow_html=True)
-if st.button("Save changes"):
-    st.session_state.bin_data["Deployed"] = updated_deployed
-    st.toast("Bin capacity changes saved!")
-    st.rerun()
-st.markdown("</div>", unsafe_allow_html=True)
+if st.button("Save changes", type="primary"):
+    changed = edited[edited["Bins deployed"].notna() & (edited["Bins deployed"] != table["Bins deployed"])]
+    if changed.empty:
+        st.toast("No changes to save.")
+    else:
+        saved = data.save_bins(dict(zip(changed["Region"], changed["Bins deployed"].astype(int))), st.session_state.username)
+        st.toast(f"Saved bin counts for {saved} region{'s' if saved != 1 else ''}.")
+        st.rerun()
