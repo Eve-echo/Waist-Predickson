@@ -118,8 +118,9 @@ def load_css():
         }
 
         /* ---- Single joined navigation bar ---- */
+                /* ---- Single joined navigation bar ---- */
         .st-key-nav_bar {
-            background-color: #1E563B;
+            background-color: #13851B;
             border-radius: 4px;
             overflow: hidden;
         }
@@ -127,23 +128,35 @@ def load_css():
         .st-key-nav_bar div[data-testid="stColumn"] { padding: 0 !important; min-width: 0; }
         .st-key-nav_bar div[data-testid="stColumn"] + div[data-testid="stColumn"] { border-left: 1px solid rgba(255, 255, 255, 0.45); }
         .st-key-nav_bar [class*="st-key-nav_"], .st-key-nav_bar [data-testid="stButton"] { width: 100% !important; }
+
+        /* default item: bright green, white text */
         .st-key-nav_bar .stButton > button {
             width: 100% !important;
             justify-content: center;
             border: none !important;
             border-radius: 0 !important;
-            background-color: transparent !important;
+            background-color: #13851B !important;
             color: #FFFFFF !important;
             font-weight: 500 !important;
             padding: 0.7rem 0.5rem !important;
             min-height: 2.9rem;
+            transition: color 0.15s ease;
         }
-        .st-key-nav_bar .stButton > button:hover { background-color: #2B6B4A !important; }
-        .st-key-nav_bar .stButton > button[kind="primary"] { background-color: #0F3A24 !important; font-weight: 600 !important; }
+        .st-key-nav_bar .stButton > button p { color: inherit !important; }
 
+        /* hover: text turns black */
+        .st-key-nav_bar .stButton > button:hover { background-color: #13851B !important; color: #000000 !important; }
+
+        /* selected (current page): dark green, white text, stays white on hover */
+        .st-key-nav_bar .stButton > button[kind="primary"],
+        .st-key-nav_bar .stButton > button[kind="primary"]:hover {
+            background-color: #1E563B !important;
+            color: #FFFFFF !important;
+            font-weight: 600 !important;
+        }
         .st-key-nav_logo [data-testid="stMarkdownContainer"] { margin-bottom: 0 !important; }
 
-        /* ---- Profile icon: plain icon, no square, no dropdown arrow ---- */
+        /*  Profile icon */
         .st-key-nav_profile { display: flex; justify-content: flex-end; }
         .st-key-nav_profile button {
             border: none !important;
